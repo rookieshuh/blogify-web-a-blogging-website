@@ -1,0 +1,47 @@
+stages:
+  - install
+  - test
+  - build
+  - deploy
+
+variables:
+  NODE_ENV: production
+
+# 🛠️ Install dependencies
+install-dependencies:
+  stage: install
+  script:
+    - cd frontend && npm install
+    - cd ../backend && npm install
+  tags:
+    - docker
+
+# ✅ Run backend tests (optional)
+run-tests:
+  stage: test
+  script:
+    - cd backend && npm test || true
+  tags:
+    - docker
+
+# ⚙️ Build frontend
+build-frontend:
+  stage: build
+  script:
+    - cd frontend && npm run build
+  artifacts:
+    paths:
+      - frontend/dist
+  tags:
+    - docker
+
+# 🚀 Deploy to production (only from master)
+deploy-production:
+  stage: deploy
+  script:
+    - echo "🚀 Deploying to production server from master branch..."
+    - curl -X POST "$RENDER_DEPLOY_HOOK"
+  only:
+    - master
+  tags:
+    - docker
