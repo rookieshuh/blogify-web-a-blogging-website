@@ -5,7 +5,7 @@ import Home from './pages/Home';
 import NoPage from './pages/NoPage';
 import SingleBlog from './pages/SingleBlog';
 import SignUp from './pages/SignUp';
-import Login from './pages/Loign';
+import Login from './pages/Login';
 import UploadBlog from './pages/UploadBlog';
 import LearnMore from './pages/LearnMore';
 
