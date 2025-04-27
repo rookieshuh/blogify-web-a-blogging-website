@@ -7,9 +7,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "prepare": "husky install",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "prepare": "husky install"
+    
 
   },
   "keywords": [],
