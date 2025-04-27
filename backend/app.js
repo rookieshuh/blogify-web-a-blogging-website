@@ -5,8 +5,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require("cors");
 
-var indexRouter = require('../../Full-Stack-Blog-App/backend/routes/index');
-var usersRouter = require('../../Full-Stack-Blog-App/backend/routes/users');
+var indexRouter = require('../backend/routes/index');
+var usersRouter = require('../backend/routes/users');
 
 var app = express();
 
