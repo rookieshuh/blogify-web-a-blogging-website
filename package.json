@@ -1,20 +1,23 @@
 {
   "name": "blogify-web-a-blogging-website",
   "version": "1.0.0",
-  "description": "**A full-featured blogging platform built with the MERN Stack (MongoDB, Express, React, Node.js).**",
+  "description": "A full-featured blogging platform built with the MERN Stack (MongoDB, Express, React, Node.js).",
   "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
   "scripts": {
+    "run": "concurrently --kill-others-on-fail \"npm run start\" \"npm run dev\"",
+    "start": "cross-env NODE_ENV=development cd frontend && npm run dev",
+    "dev": "cross-env NODE_ENV=development cd backend && npm start",
     "prepare": "husky install",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
-
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3"
+  },
   "devDependencies": {
     "@commitlint/cli": "^19.8.0",
     "@commitlint/config-conventional": "^19.8.0",
