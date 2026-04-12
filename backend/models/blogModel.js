@@ -10,7 +10,8 @@ const blogSchema = new mongoose.Schema({
   content: String,
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'user'
+    ref: 'user',
+    required: true
   },
   date: {
     type: Date,

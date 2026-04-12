@@ -7,6 +7,8 @@ var bcrypt = require('bcryptjs');
 const multer  = require('multer');
 const path = require('path');
 var jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
 
 const secret = process.env.JWT_SECRET;
 if (!secret) {
@@ -14,12 +16,28 @@ if (!secret) {
   process.exit(1);
 }
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, msg: "Too many requests, please try again later." },
+});
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, msg: "Too many requests, please try again later." },
+});
+
 /* GET home page. */
 router.get('/', function (req, res, next) {
   res.render('index', { title: 'Express' });
 });
 
-router.post("/signUp", async (req, res) => {
+router.post("/signUp", authLimiter, async (req, res) => {
   let { username, name, email, password } = req.body;
   let emailCon = await userModel.findOne({ email: email });
   if (emailCon) {
@@ -49,7 +67,7 @@ router.post("/signUp", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   let { email, password } = req.body;
   let user = await userModel.findOne({ email: email });
   if (!user) {
@@ -101,7 +119,7 @@ const fileFilter = function (req, file, cb) {
 
 const upload = multer({ storage: storage, fileFilter: fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.post("/uploadBlog", upload.single('image'), async (req, res) => {
+router.post("/uploadBlog", apiLimiter, upload.single('image'), async (req, res) => {
   try {
     let {token, title, desc, content} = req.body;
     // Decode the token to get the user ID
@@ -151,7 +169,7 @@ router.post("/uploadBlog", upload.single('image'), async (req, res) => {
   }
 });
 
-router.post("/getBlogs", async (req, res) => {
+router.post("/getBlogs", apiLimiter, async (req, res) => {
   try {
     let {token} = req.body;
     let decoded;
@@ -179,7 +197,7 @@ router.post("/getBlogs", async (req, res) => {
   }
 });
 
-router.post("/getBlog", async (req, res) => {
+router.post("/getBlog", apiLimiter, async (req, res) => {
   try {
     let {token, blogId} = req.body;
     let decoded;
@@ -195,7 +213,11 @@ router.post("/getBlog", async (req, res) => {
         msg: "User not found"
       });
     }
-    let blog = await blogModel.findOne({_id: blogId});
+    let blog;
+    if (!mongoose.Types.ObjectId.isValid(blogId)) {
+      return res.json({ success: false, msg: "Invalid blog ID" });
+    }
+    blog = await blogModel.findOne({_id: blogId});
     return res.json({
       success: true,
       msg: "Blog featched successfully",
