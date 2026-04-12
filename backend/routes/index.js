@@ -188,7 +188,7 @@ router.post("/getBlogs", apiLimiter, async (req, res) => {
     let blogs = await blogModel.find({});
     return res.json({
       success: true,
-      msg: "Blogs featched successfully",
+      msg: "Blogs fetched successfully",
       blogs: blogs
     });
   } catch (error) {
@@ -220,7 +220,7 @@ router.post("/getBlog", apiLimiter, async (req, res) => {
     blog = await blogModel.findOne({_id: blogId});
     return res.json({
       success: true,
-      msg: "Blog featched successfully",
+      msg: "Blog fetched successfully",
       blog: blog
     });
   } catch (error) {
