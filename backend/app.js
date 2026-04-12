@@ -1,3 +1,4 @@
+require('dotenv').config();
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -21,8 +22,14 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use("/uploads", express.static(path.join(__dirname, 'uploads')));
 
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:5173'];
 
-app.use(cors());
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);

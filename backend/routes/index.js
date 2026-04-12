@@ -1,3 +1,4 @@
+require('dotenv').config();
 var express = require('express');
 var router = express.Router();
 var userModel = require("../models/userModel");
@@ -7,7 +8,11 @@ const multer  = require('multer');
 const path = require('path');
 var jwt = require('jsonwebtoken');
 
-const secret = "secret";
+const secret = process.env.JWT_SECRET;
+if (!secret) {
+  console.error("FATAL: JWT_SECRET environment variable is not set.");
+  process.exit(1);
+}
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
@@ -56,7 +61,7 @@ router.post("/login", async (req, res) => {
   else {
     bcrypt.compare(password, user.password, function (err, result) {
       if (result) {
-        let token = jwt.sign({ userId: user._id }, secret);
+        let token = jwt.sign({ userId: user._id }, secret, { expiresIn: '7d' });
         return res.json({
           success: true,
           msg: "User logged in successfully",
@@ -73,6 +78,8 @@ router.post("/login", async (req, res) => {
   }
 });
 
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './uploads')
@@ -84,13 +91,26 @@ const storage = multer.diskStorage({
   }
 })
 
-const upload = multer({ storage: storage });
+const fileFilter = function (req, file, cb) {
+  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files (jpeg, png, gif, webp) are allowed'), false);
+  }
+};
+
+const upload = multer({ storage: storage, fileFilter: fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 router.post("/uploadBlog", upload.single('image'), async (req, res) => {
   try {
     let {token, title, desc, content} = req.body;
     // Decode the token to get the user ID
-    let decoded = jwt.verify(token, secret);
+    let decoded;
+    try {
+      decoded = jwt.verify(token, secret);
+    } catch (err) {
+      return res.status(401).json({ success: false, msg: "Invalid or expired token" });
+    }
     let user = await userModel.findOne({ _id: decoded.userId });
     
     if (!user) {
@@ -98,6 +118,10 @@ router.post("/uploadBlog", upload.single('image'), async (req, res) => {
         success: false,
         msg: "User not found"
       });
+    }
+
+    if (!user.isAdmin) {
+      return res.status(403).json({ success: false, msg: "Access denied: admin only" });
     }
     
     // Retrieve the file name from the uploaded file
@@ -128,42 +152,58 @@ router.post("/uploadBlog", upload.single('image'), async (req, res) => {
 });
 
 router.post("/getBlogs", async (req, res) => {
-  let {token} = req.body;
-  let decoded = jwt.verify(token, secret);
-  let user = await userModel.findOne({ _id: decoded.userId });
-  if (!user) {
-    return res.json({
-      success: false,
-      msg: "User not found"
-    });
-  }
-  else{
+  try {
+    let {token} = req.body;
+    let decoded;
+    try {
+      decoded = jwt.verify(token, secret);
+    } catch (err) {
+      return res.status(401).json({ success: false, msg: "Invalid or expired token" });
+    }
+    let user = await userModel.findOne({ _id: decoded.userId });
+    if (!user) {
+      return res.json({
+        success: false,
+        msg: "User not found"
+      });
+    }
     let blogs = await blogModel.find({});
     return res.json({
       success: true,
       msg: "Blogs featched successfully",
       blogs: blogs
-    })
+    });
+  } catch (error) {
+    console.error(error);
+    return res.json({ success: false, msg: "An error occurred" });
   }
 });
 
 router.post("/getBlog", async (req, res) => {
-  let {token, blogId} = req.body;
-  let decoded = jwt.verify(token, secret);
-  let user = await userModel.findOne({ _id: decoded.userId });
-  if (!user) {
-    return res.json({
-      success: false,
-      msg: "User not found"
-    });
-  }
-  else{
+  try {
+    let {token, blogId} = req.body;
+    let decoded;
+    try {
+      decoded = jwt.verify(token, secret);
+    } catch (err) {
+      return res.status(401).json({ success: false, msg: "Invalid or expired token" });
+    }
+    let user = await userModel.findOne({ _id: decoded.userId });
+    if (!user) {
+      return res.json({
+        success: false,
+        msg: "User not found"
+      });
+    }
     let blog = await blogModel.findOne({_id: blogId});
     return res.json({
       success: true,
       msg: "Blog featched successfully",
       blog: blog
-    })
+    });
+  } catch (error) {
+    console.error(error);
+    return res.json({ success: false, msg: "An error occurred" });
   }
 })
 
