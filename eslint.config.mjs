@@ -4,6 +4,6 @@ import globals from "globals";
 
 export default defineConfig([
   { files: ["**/*.{js,mjs,cjs}"] },
-  { files: ["**/*.js"], languageOptions: { sourceType: "commonjs" } },
+  { files: ["**/*.js"], ignores: ["frontend/**"], languageOptions: { sourceType: "commonjs" } },
   { files: ["**/*.{js,mjs,cjs}"], languageOptions: { globals: globals.browser } },
 ]);
